@@ -2,21 +2,33 @@
 
 var DyslexiaMode = {
   render: function (text, container) {
-    
+    // clear whatever was in there before
     container.innerHTML = "";
+
+
     var wrapper = document.createElement("div");
     wrapper.className = "dyslexia-text dyslexia-cream";
-    var p = document.createElement("p");
-    p.textContent = text;
-    wrapper.appendChild(p);
+    wrapper.id = "dyslexia-wrapper";
 
     
+    var lines = text.split("\n");
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i].trim();
+      if (line.length > 0) {
+        var p = document.createElement("p");
+        p.textContent = line;
+        p.style.marginBottom = "8px";
+        wrapper.appendChild(p);
+      }
+    }
+
+
     var picker = document.createElement("div");
     picker.className = "dyslexia-tint-picker";
 
     var tints = ["cream", "yellow", "blue", "green"];
-    for (var i = 0; i < tints.length; i++) {
-      var tint = tints[i];
+    for (var j = 0; j < tints.length; j++) {
+      var tint = tints[j];
       var btn = document.createElement("button");
       btn.style.backgroundColor = getTintColor(tint);
       btn.onclick = (function (tintName) {
