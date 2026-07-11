@@ -74,7 +74,7 @@ function showLoading(isLoading) {
   document.getElementById('ss-dropzone').classList.toggle('ss-hidden', isLoading);
 }
 
-// ---- Step 5: draw the image to a canvas and pre-process it ----
+
 function preprocessImage(imageElement) {
   const canvas = document.createElement('canvas');
   canvas.width = imageElement.width;
@@ -106,7 +106,7 @@ function preprocessImage(imageElement) {
   return canvas;
 }
 
-// ---- Step 6: load the image, preprocess it, run OCR ----
+
 function extractFromImage(file) {
   const reader = new FileReader();
 
@@ -129,4 +129,39 @@ function extractFromImage(file) {
   };
 
   reader.readAsDataURL(file);
+}
+
+
+async function extractFromPDF(file) {
+  
+  pdfjsLib.GlobalWorkerOptions.workerSrc =
+    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+    let fullText = '';
+    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+      const page = await pdf.getPage(pageNum);
+      const content = await page.getTextContent();
+      const pageText = content.items.map(item => item.str).join(' ');
+      fullText += pageText + '\n';
+    }
+
+    fullText = fullText.trim();
+
+    if (fullText.length === 0) {
+      
+      showLoading(false);
+      alert('This PDF has no selectable text (it may be a scanned image). Try uploading it as an image instead.');
+      return;
+    }
+
+    finishExtraction(fullText);
+  } catch (err) {
+    console.error('PDF extraction failed:', err);
+    showLoading(false);
+    alert('Could not read that PDF.');
+  }
 }
