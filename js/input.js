@@ -73,3 +73,35 @@ function showLoading(isLoading) {
   document.getElementById('ss-loading').classList.toggle('ss-hidden', !isLoading);
   document.getElementById('ss-dropzone').classList.toggle('ss-hidden', isLoading);
 }
+
+// ---- Step 5: draw the image to a canvas and pre-process it ----
+function preprocessImage(imageElement) {
+  const canvas = document.createElement('canvas');
+  canvas.width = imageElement.width;
+  canvas.height = imageElement.height;
+  const ctx = canvas.getContext('2d');
+
+  ctx.drawImage(imageElement, 0, 0);
+
+  
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const pixels = imageData.data;
+
+  const contrastFactor = 1.5; 
+
+  for (let i = 0; i < pixels.length; i += 4) {
+    
+    const gray = (pixels[i] + pixels[i + 1] + pixels[i + 2]) / 3;
+
+    
+    let contrasted = (gray - 128) * contrastFactor + 128;
+    contrasted = Math.max(0, Math.min(255, contrasted)); 
+    pixels[i] = contrasted;     
+    pixels[i + 1] = contrasted; 
+    pixels[i + 2] = contrasted; 
+    
+  }
+
+  ctx.putImageData(imageData, 0, 0);
+  return canvas;
+}
