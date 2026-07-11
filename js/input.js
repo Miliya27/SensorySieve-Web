@@ -75,6 +75,7 @@ function showLoading(isLoading) {
 }
 
 
+
 function preprocessImage(imageElement) {
   const canvas = document.createElement('canvas');
   canvas.width = imageElement.width;
@@ -85,8 +86,7 @@ function preprocessImage(imageElement) {
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
   const pixels = imageData.data;
 
-  const contrastFactor = 1.5;
-  const threshold = 150; 
+  const contrastFactor = 1.3; 
 
   for (let i = 0; i < pixels.length; i += 4) {
     const gray = (pixels[i] + pixels[i + 1] + pixels[i + 2]) / 3;
@@ -94,11 +94,9 @@ function preprocessImage(imageElement) {
     contrasted = Math.max(0, Math.min(255, contrasted));
 
     
-    const binarized = contrasted > threshold ? 255 : 0;
-
-    pixels[i] = binarized;
-    pixels[i + 1] = binarized;
-    pixels[i + 2] = binarized;
+    pixels[i] = contrasted;
+    pixels[i + 1] = contrasted;
+    pixels[i + 2] = contrasted;
   }
 
   ctx.putImageData(imageData, 0, 0);
@@ -116,10 +114,8 @@ function extractFromImage(file) {
 
       try {
        
-        const result = await Tesseract.recognize(processedCanvas, 'eng', {
-          tessedit_pageseg_mode: 6, 
-        });
-        const text = result.data.text.trim();
+        const result = await Tesseract.recognize(processedCanvas, 'eng');
+const text = result.data.text.trim();
         finishExtraction(text);
       } catch (err) {
         console.error('OCR failed:', err);
