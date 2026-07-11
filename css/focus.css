@@ -22,6 +22,8 @@
   max-width: 60ch;
   margin: 0 auto;
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  position: relative;
+  z-index: 1;
 }
 
 .ss-focus-text p {
@@ -48,9 +50,10 @@
   position: absolute;
   left: 0;
   width: 100%;
-  background-color: rgba(20, 20, 18, 0.55);
+  background-color: rgba(10, 10, 8, 0.72);
   pointer-events: none;
   transition: height 0.05s linear, top 0.05s linear;
+  z-index: 2;
 }
 
 .ss-focus-ruler-top {
@@ -59,4 +62,20 @@
 
 .ss-focus-ruler-bottom {
   bottom: 0;
+}
+
+
+.ss-focus-frozen,
+.ss-focus-frozen * {
+  animation-play-state: paused !important;
+  transition: none !important;
+}
+
+
+.ss-focus-gif-frozen {
+  display: none !important;
+}
+
+.ss-focus-gif-snapshot {
+  display: inline-block;
 }

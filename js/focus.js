@@ -1,5 +1,4 @@
 
-
 var FocusMode = (function () {
   'use strict';
 
@@ -14,6 +13,10 @@ var FocusMode = (function () {
   var currentWrapper = null;
 
   
+  var mediaWatcher = null;
+
+  
+
   function makeBionicWord(word) {
     if (word.length === 0) {
       return '';
@@ -29,7 +32,6 @@ var FocusMode = (function () {
     return html;
   }
 
-  
   function makeBionicParagraph(paragraph) {
     var words = paragraph.split(' ');
     var bionicWords = [];
@@ -41,13 +43,11 @@ var FocusMode = (function () {
     return bionicWords.join(' ');
   }
 
-  
   function buildTextHtml(text) {
     var paragraphs = text.split(/\n+/).filter(function (p) {
       return p.trim().length > 0;
     });
 
-    
     if (paragraphs.length === 0) {
       paragraphs = [text];
     }
@@ -71,7 +71,6 @@ var FocusMode = (function () {
     var bandTop = pointerY - rulerBandHeight / 2;
     var bandBottom = pointerY + rulerBandHeight / 2;
 
-    
     if (bandTop < 0) bandTop = 0;
     if (bandBottom > wrapperHeight) bandBottom = wrapperHeight;
 
@@ -79,7 +78,6 @@ var FocusMode = (function () {
     bottomBar.style.height = (wrapperHeight - bandBottom) + 'px';
   }
 
-  
   function getPointerY(event, wrapper) {
     var wrapperBox = wrapper.getBoundingClientRect();
 
@@ -91,7 +89,6 @@ var FocusMode = (function () {
   }
 
   function attachRulerTracking(wrapper) {
-    
     if (currentMoveHandler && currentWrapper) {
       currentWrapper.removeEventListener('mousemove', currentMoveHandler);
       currentWrapper.removeEventListener('touchmove', currentMoveHandler);
@@ -107,12 +104,67 @@ var FocusMode = (function () {
 
     currentWrapper = wrapper;
 
-    
     moveRulerTo(wrapper.offsetHeight / 2, wrapper);
   }
 
- 
+  
 
+  function pauseVideosAndAudio(wrapper) {
+    var mediaElements = wrapper.querySelectorAll('video, audio');
+
+    for (var i = 0; i < mediaElements.length; i++) {
+      try {
+        mediaElements[i].pause();
+      } catch (error) {
+        
+      }
+    }
+  }
+
+  // 
+  function freezeGifs(wrapper) {
+    var gifImages = wrapper.querySelectorAll(
+      'img[src*=".gif"]:not(.ss-focus-gif-frozen)'
+    );
+
+    for (var i = 0; i < gifImages.length; i++) {
+      var image = gifImages[i];
+
+      try {
+        var snapshotCanvas = document.createElement('canvas');
+        snapshotCanvas.className = 'ss-focus-gif-snapshot';
+        snapshotCanvas.width = image.naturalWidth || image.width;
+        snapshotCanvas.height = image.naturalHeight || image.height;
+        snapshotCanvas.style.width = getComputedStyle(image).width;
+        snapshotCanvas.style.height = getComputedStyle(image).height;
+
+        var context = snapshotCanvas.getContext('2d');
+        context.drawImage(image, 0, 0, snapshotCanvas.width, snapshotCanvas.height);
+
+        image.classList.add('ss-focus-gif-frozen');
+        image.parentNode.insertBefore(snapshotCanvas, image.nextSibling);
+      } catch (error) {
+        // Cross-origin images can block this. Skip and move on.
+      }
+    }
+  }
+
+  function startMotionFreeze(wrapper) {
+    pauseVideosAndAudio(wrapper);
+    wrapper.classList.add('ss-focus-frozen');
+    freezeGifs(wrapper);
+
+    // In case media gets added to the container later (e.g. a slow
+    // extraction result that streams in), catch it too.
+    mediaWatcher = new MutationObserver(function () {
+      pauseVideosAndAudio(wrapper);
+      freezeGifs(wrapper);
+    });
+
+    mediaWatcher.observe(wrapper, { childList: true, subtree: true });
+  }
+
+  
   function buildWrapperHtml(text) {
     var textHtml = buildTextHtml(text);
 
@@ -126,17 +178,24 @@ var FocusMode = (function () {
     return html;
   }
 
-
+  
 
   function render(text, container) {
     if (!container) {
       return;
     }
 
+    
+    if (mediaWatcher) {
+      mediaWatcher.disconnect();
+      mediaWatcher = null;
+    }
+
     container.innerHTML = buildWrapperHtml(text);
 
     var wrapper = container.querySelector('.ss-focus-wrapper');
     attachRulerTracking(wrapper);
+    startMotionFreeze(wrapper);
   }
 
   return {
