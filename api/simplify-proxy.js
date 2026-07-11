@@ -16,16 +16,14 @@ module.exports = async function handler(req, res) {
   var apiKey = process.env.LLM_API_KEY;
 
   try {
-    var response = await fetch("https://api.anthropic.com/v1/messages", {
+    var response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01"
+        "Authorization": "Bearer " + apiKey
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 1000,
+        model: "llama-3.3-70b-versatile",
         messages: [
           {
             role: "user",
@@ -36,7 +34,14 @@ module.exports = async function handler(req, res) {
     });
 
     var data = await response.json();
-    var bulletText = data.content[0].text;
+    
+
+    if (!data.choices || !data.choices[0]) {
+      res.status(500).json({ error: "Simplify call failed" });
+      return;
+    }
+
+    var bulletText = data.choices[0].message.content;
 
     res.status(200).json({ text: bulletText });
   } catch (err) {
