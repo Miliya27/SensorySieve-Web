@@ -165,3 +165,8 @@ async function extractFromPDF(file) {
     alert('Could not read that PDF.');
   }
 }
+
+function finishExtraction(text) {
+  showLoading(false);
+  window.dispatchEvent(new CustomEvent('textExtracted', { detail: { text } }));
+}
