@@ -105,3 +105,28 @@ function preprocessImage(imageElement) {
   ctx.putImageData(imageData, 0, 0);
   return canvas;
 }
+
+// ---- Step 6: load the image, preprocess it, run OCR ----
+function extractFromImage(file) {
+  const reader = new FileReader();
+
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = async () => {
+      const processedCanvas = preprocessImage(img);
+
+      try {
+        const result = await Tesseract.recognize(processedCanvas, 'eng');
+        const text = result.data.text.trim();
+        finishExtraction(text);
+      } catch (err) {
+        console.error('OCR failed:', err);
+        showLoading(false);
+        alert('Could not read text from that image. Try a clearer photo.');
+      }
+    };
+    img.src = e.target.result;
+  };
+
+  reader.readAsDataURL(file);
+}
