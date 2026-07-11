@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Focus Mode Test</title>
+  <link rel="stylesheet" href="css/focus.css">
+  <style>
+    body {
+      background: #e8e8e5;
+      padding: 40px 20px;
+      font-family: system-ui, sans-serif;
+    }
+    h1 {
+      max-width: 700px;
+      margin: 0 auto 20px auto;
+      font-size: 20px;
+    }
+    #status {
+      max-width: 700px;
+      margin: 0 auto 20px auto;
+      padding: 12px 16px;
+      background: #fff3cd;
+      border: 1px solid #e0c36b;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Focus Mode Test — Sliders + Read Aloud + Hover-Define</h1>
+  <div id="status">
+    Try the sliders above the text. Click "Read Aloud" to hear it spoken.
+    Hover over any word with a dotted underline to see its definition
+    (long, less-common words only — e.g. "paragraph", "different", "important").
+  </div>
+  <div id="reader-output"></div>
+
+  <!-- Load order matters: speech.js and hover-define.js must load
+       BEFORE focus.js, so focus.js can detect they exist. -->
+  <script src="js/speech.js"></script>
+  <script src="js/hover-define.js"></script>
+  <script src="js/focus.js"></script>
+
+  <script>
+    var sampleText =
+      "This is a sample paragraph to test Bionic Reading and important accessibility features. " +
+      "Move your mouse over this text to see the Focus Ruler follow it.\n\n" +
+      "Different students understand information differently, so these controls let everyone adjust the experience themselves.";
+
+    var container = document.getElementById('reader-output');
+    FocusMode.render(sampleText, container);
+  </script>
+</body>
+</html>

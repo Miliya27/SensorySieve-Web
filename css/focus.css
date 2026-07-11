@@ -7,8 +7,11 @@
   background-color: #f4f3f0;
   border-radius: 12px;
   overflow: hidden;
-}
 
+  --ss-focus-font-size: 19px;
+  --ss-focus-line-height: 1.8;
+  --ss-focus-contrast: 100%;
+}
 
 .ss-focus-wrapper,
 .ss-focus-text {
@@ -17,8 +20,9 @@
 
 
 .ss-focus-text {
-  font-size: 19px;
-  line-height: 1.8;
+  font-size: var(--ss-focus-font-size);
+  line-height: var(--ss-focus-line-height);
+  filter: contrast(var(--ss-focus-contrast));
   max-width: 60ch;
   margin: 0 auto;
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -71,11 +75,98 @@
   transition: none !important;
 }
 
-
 .ss-focus-gif-frozen {
   display: none !important;
 }
 
 .ss-focus-gif-snapshot {
   display: inline-block;
+}
+
+
+.ss-focus-controls {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 28px;
+  align-items: center;
+  margin-bottom: 28px;
+  padding-bottom: 24px;
+  border-bottom: 2px solid rgba(58, 58, 56, 0.2);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 22px;
+}
+
+.ss-focus-control-group {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.ss-focus-control-group label {
+  color: #2c2c2a;
+  font-weight: 700;
+  font-size: 22px;
+  white-space: nowrap;
+}
+
+.ss-focus-control-group input[type="range"] {
+  width: 150px;
+  height: 28px;
+  accent-color: #6b6b5f;
+  cursor: pointer;
+}
+
+.ss-focus-read-btn {
+  margin-left: auto;
+  padding: 16px 32px;
+  background-color: #6b6b5f;
+  color: #f4f3f0;
+  border: none;
+  border-radius: 10px;
+  font-size: 20px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ss-focus-read-btn:hover {
+  background-color: #55554b;
+}
+
+.ss-focus-read-btn.ss-focus-reading {
+  background-color: #b05c4a;
+}
+
+
+.ss-focus-definable {
+  border-bottom: 1px dotted #8a8a80;
+  cursor: help;
+}
+
+.ss-focus-tooltip {
+  position: absolute;
+  z-index: 10;
+  max-width: 360px;
+  background-color: #2c2c2a;
+  color: #f4f3f0;
+  padding: 18px 22px;
+  border-radius: 12px;
+  font-size: 18px;
+  line-height: 1.6;
+  pointer-events: none;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+}
+
+.ss-focus-tooltip-word {
+  font-weight: 700;
+  font-size: 22px;
+  margin-bottom: 6px;
+  text-transform: capitalize;
+}
+
+.ss-focus-tooltip-phonetic {
+  color: #c8c8c0;
+  font-size: 16px;
+  margin-bottom: 10px;
 }

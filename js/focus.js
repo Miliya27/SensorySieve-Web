@@ -1,18 +1,13 @@
 
+
 var FocusMode = (function () {
   'use strict';
 
-  
   var rulerBandHeight = 90;
-
-  
   var bionicBoldFraction = 0.45;
 
-  
   var currentMoveHandler = null;
   var currentWrapper = null;
-
-  
   var mediaWatcher = null;
 
   
@@ -26,8 +21,13 @@ var FocusMode = (function () {
     var boldPart = word.slice(0, boldLength);
     var restPart = word.slice(boldLength);
 
-    var html = '<b class="ss-focus-bionic-bold">' + boldPart + '</b>';
-    html += '<span class="ss-focus-bionic-rest">' + restPart + '</span>';
+    var innerHtml = '<b class="ss-focus-bionic-bold">' + boldPart + '</b>';
+    innerHtml += '<span class="ss-focus-bionic-rest">' + restPart + '</span>';
+    var cleanWord = word.toLowerCase().replace(/[^a-z']/g, '');
+
+    var html = '<span class="ss-focus-word" data-word="' + cleanWord + '">';
+    html += innerHtml;
+    html += '</span>';
 
     return html;
   }
@@ -61,6 +61,7 @@ var FocusMode = (function () {
   }
 
   
+
   function moveRulerTo(pointerY, wrapper) {
     var topBar = wrapper.querySelector('.ss-focus-ruler-top');
     var bottomBar = wrapper.querySelector('.ss-focus-ruler-bottom');
@@ -121,7 +122,6 @@ var FocusMode = (function () {
     }
   }
 
-  // 
   function freezeGifs(wrapper) {
     var gifImages = wrapper.querySelectorAll(
       'img[src*=".gif"]:not(.ss-focus-gif-frozen)'
@@ -144,7 +144,7 @@ var FocusMode = (function () {
         image.classList.add('ss-focus-gif-frozen');
         image.parentNode.insertBefore(snapshotCanvas, image.nextSibling);
       } catch (error) {
-        // Cross-origin images can block this. Skip and move on.
+        
       }
     }
   }
@@ -154,8 +154,6 @@ var FocusMode = (function () {
     wrapper.classList.add('ss-focus-frozen');
     freezeGifs(wrapper);
 
-    // In case media gets added to the container later (e.g. a slow
-    // extraction result that streams in), catch it too.
     mediaWatcher = new MutationObserver(function () {
       pauseVideosAndAudio(wrapper);
       freezeGifs(wrapper);
@@ -165,13 +163,98 @@ var FocusMode = (function () {
   }
 
   
+
+  function buildControlsHtml() {
+    var html = '';
+    html += '<div class="ss-focus-controls">';
+
+    html += '  <div class="ss-focus-control-group">';
+    html += '    <label for="ss-focus-font-size-slider">Font size</label>';
+    html += '    <input type="range" id="ss-focus-font-size-slider" min="14" max="28" value="19" step="1">';
+    html += '  </div>';
+
+    html += '  <div class="ss-focus-control-group">';
+    html += '    <label for="ss-focus-line-height-slider">Spacing</label>';
+    html += '    <input type="range" id="ss-focus-line-height-slider" min="14" max="24" value="18" step="1">';
+    html += '  </div>';
+
+    html += '  <div class="ss-focus-control-group">';
+    html += '    <label for="ss-focus-contrast-slider">Contrast</label>';
+    html += '    <input type="range" id="ss-focus-contrast-slider" min="70" max="130" value="100" step="5">';
+    html += '  </div>';
+
+    html += '  <button type="button" class="ss-focus-read-btn">Read Aloud</button>';
+
+    html += '</div>';
+
+    return html;
+  }
+
+  function attachControlListeners(wrapper, text) {
+    var fontSizeSlider = wrapper.querySelector('#ss-focus-font-size-slider');
+    var lineHeightSlider = wrapper.querySelector('#ss-focus-line-height-slider');
+    var contrastSlider = wrapper.querySelector('#ss-focus-contrast-slider');
+    var readButton = wrapper.querySelector('.ss-focus-read-btn');
+
+    fontSizeSlider.addEventListener('input', function () {
+      wrapper.style.setProperty('--ss-focus-font-size', fontSizeSlider.value + 'px');
+    });
+
+    lineHeightSlider.addEventListener('input', function () {
+      var ratio = lineHeightSlider.value / 10;
+      wrapper.style.setProperty('--ss-focus-line-height', ratio);
+    });
+
+    contrastSlider.addEventListener('input', function () {
+      wrapper.style.setProperty('--ss-focus-contrast', contrastSlider.value + '%');
+    });
+
+    readButton.addEventListener('click', function () {
+      
+      if (typeof Speech === 'undefined') {
+        return;
+      }
+
+      if (readButton.classList.contains('ss-focus-reading')) {
+        Speech.stop();
+        readButton.classList.remove('ss-focus-reading');
+        readButton.textContent = 'Read Aloud';
+        return;
+      }
+
+      readButton.classList.add('ss-focus-reading');
+      readButton.textContent = 'Stop Reading';
+
+      Speech.read(text, function onFinished() {
+        readButton.classList.remove('ss-focus-reading');
+        readButton.textContent = 'Read Aloud';
+      });
+    });
+  }
+
+  
+
+  function attachHoverDefine(wrapper) {
+
+    if (typeof HoverDefine === 'undefined') {
+      return;
+    }
+
+    var textBox = wrapper.querySelector('.ss-focus-text');
+    HoverDefine.attach(textBox);
+  }
+
+  
+
   function buildWrapperHtml(text) {
     var textHtml = buildTextHtml(text);
+    var controlsHtml = buildControlsHtml();
 
     var html = '';
     html += '<div class="ss-focus-wrapper">';
     html += '  <div class="ss-focus-ruler-top"></div>';
     html += '  <div class="ss-focus-ruler-bottom"></div>';
+    html += controlsHtml;
     html += '  <div class="ss-focus-text">' + textHtml + '</div>';
     html += '</div>';
 
@@ -185,10 +268,13 @@ var FocusMode = (function () {
       return;
     }
 
-    
     if (mediaWatcher) {
       mediaWatcher.disconnect();
       mediaWatcher = null;
+    }
+
+    if (typeof Speech !== 'undefined') {
+      Speech.stop();
     }
 
     container.innerHTML = buildWrapperHtml(text);
@@ -196,6 +282,8 @@ var FocusMode = (function () {
     var wrapper = container.querySelector('.ss-focus-wrapper');
     attachRulerTracking(wrapper);
     startMotionFreeze(wrapper);
+    attachControlListeners(wrapper, text);
+    attachHoverDefine(wrapper);
   }
 
   return {
