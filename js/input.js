@@ -1,4 +1,5 @@
 
+
 const inputZone = document.getElementById('input-zone');
 
 inputZone.innerHTML = `
@@ -12,8 +13,14 @@ inputZone.innerHTML = `
       <button id="ss-upload-btn" class="ss-btn">📁 Upload File</button>
     </div>
 
+    <div class="ss-url-row">
+      <input type="text" id="ss-url-input" class="ss-url-field" placeholder="Or paste a URL..." />
+      <button id="ss-url-btn" class="ss-btn">🔗 Load</button>
+    </div>
+    <p id="ss-url-error" class="ss-url-error ss-hidden"></p>
+
     <div id="ss-loading" class="ss-loading ss-hidden">
-      <p>Reading your document...</p>
+      <p id="ss-loading-text">Reading your document...</p>
     </div>
   </div>
 `;
@@ -36,6 +43,18 @@ document.getElementById('ss-file-input').addEventListener('change', (e) => {
   if (e.target.files[0]) handleFile(e.target.files[0]);
 });
 
+document.getElementById('ss-url-btn').addEventListener('click', () => {
+  const url = document.getElementById('ss-url-input').value.trim();
+  if (url) {
+    handleUrlSubmit(url);
+  }
+});
+
+document.getElementById('ss-url-input').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    document.getElementById('ss-url-btn').click();
+  }
+});
 
 
 const dropzone = document.getElementById('ss-dropzone');
@@ -166,4 +185,72 @@ async function extractFromPDF(file) {
 function finishExtraction(text) {
   showLoading(false);
   window.dispatchEvent(new CustomEvent('textExtracted', { detail: { text } }));
+}
+
+
+
+function showLoading(isLoading, message = 'Reading your document...') {
+  const loadingEl = document.getElementById('ss-loading');
+  const loadingTextEl = document.getElementById('ss-loading-text');
+  loadingTextEl.textContent = message;
+  loadingEl.classList.toggle('ss-hidden', !isLoading);
+  document.getElementById('ss-dropzone').classList.toggle('ss-hidden', isLoading);
+}
+
+
+const URL_FETCH_ENDPOINT = '/api/fetch-url-proxy';
+
+async function handleUrlSubmit(url) {
+  hideUrlError();
+  showLoading(true, 'Fetching page content...');
+
+  
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000); 
+  try {
+    const response = await fetch(URL_FETCH_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      throw new Error(`Server responded with status ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (!data.text || data.text.trim().length === 0) {
+      throw new Error('No readable text found at that URL.');
+    }
+
+    showLoading(false);
+    
+    window.dispatchEvent(new CustomEvent('textExtracted', { detail: { text: data.text } }));
+
+  } catch (err) {
+    clearTimeout(timeoutId);
+    showLoading(false);
+
+    if (err.name === 'AbortError') {
+      showUrlError('That took too long to load. Try again or use a different URL.');
+    } else {
+      showUrlError('Could not load that page. Check the URL and try again.');
+    }
+    console.error('URL fetch failed:', err);
+  }
+}
+
+function showUrlError(message) {
+  const errorEl = document.getElementById('ss-url-error');
+  errorEl.textContent = message;
+  errorEl.classList.remove('ss-hidden');
+}
+
+function hideUrlError() {
+  const errorEl = document.getElementById('ss-url-error');
+  errorEl.classList.add('ss-hidden');
 }

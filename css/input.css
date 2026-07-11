@@ -45,3 +45,29 @@
 .ss-hidden {
   display: none;
 }
+
+
+.ss-url-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.ss-url-field {
+  flex: 1;
+  padding: 0.6rem 0.9rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+.ss-url-field:focus {
+  outline: none;
+  border-color: #4a90e2;
+}
+
+.ss-url-error {
+  color: #d9534f;
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+}
