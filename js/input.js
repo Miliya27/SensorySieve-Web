@@ -80,26 +80,25 @@ function preprocessImage(imageElement) {
   canvas.width = imageElement.width;
   canvas.height = imageElement.height;
   const ctx = canvas.getContext('2d');
-
   ctx.drawImage(imageElement, 0, 0);
 
-  
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
   const pixels = imageData.data;
 
-  const contrastFactor = 1.5; 
+  const contrastFactor = 1.5;
+  const threshold = 150; 
 
   for (let i = 0; i < pixels.length; i += 4) {
-    
     const gray = (pixels[i] + pixels[i + 1] + pixels[i + 2]) / 3;
+    let contrasted = (gray - 128) * contrastFactor + 128;
+    contrasted = Math.max(0, Math.min(255, contrasted));
 
     
-    let contrasted = (gray - 128) * contrastFactor + 128;
-    contrasted = Math.max(0, Math.min(255, contrasted)); 
-    pixels[i] = contrasted;     
-    pixels[i + 1] = contrasted; 
-    pixels[i + 2] = contrasted; 
-    
+    const binarized = contrasted > threshold ? 255 : 0;
+
+    pixels[i] = binarized;
+    pixels[i + 1] = binarized;
+    pixels[i + 2] = binarized;
   }
 
   ctx.putImageData(imageData, 0, 0);
@@ -116,7 +115,10 @@ function extractFromImage(file) {
       const processedCanvas = preprocessImage(img);
 
       try {
-        const result = await Tesseract.recognize(processedCanvas, 'eng');
+       
+        const result = await Tesseract.recognize(processedCanvas, 'eng', {
+          tessedit_pageseg_mode: 6, 
+        });
         const text = result.data.text.trim();
         finishExtraction(text);
       } catch (err) {
@@ -130,7 +132,6 @@ function extractFromImage(file) {
 
   reader.readAsDataURL(file);
 }
-
 
 async function extractFromPDF(file) {
   
