@@ -1,0 +1,42 @@
+@font-face {
+  font-family: 'OpenDyslexic';
+  src: url('../assets/fonts/OpenDyslexic-Regular.otf') format('opentype');
+}
+
+.dyslexia-text {
+  font-family: 'OpenDyslexic', sans-serif;
+  line-height: 2.0;
+  letter-spacing: 0.06em;
+  text-align: left;
+  font-size: 18px;
+}
+
+.dyslexia-cream {
+  background-color: #f5f0dc;
+}
+
+.dyslexia-yellow {
+  background-color: #fdf6b2;
+}
+
+.dyslexia-blue {
+  background-color: #e0f0fa;
+}
+
+.dyslexia-green {
+  background-color: #e3f2e1;
+}
+
+.dyslexia-tint-picker {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.dyslexia-tint-picker button {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid #ccc;
+  cursor: pointer;
+}
