@@ -54,3 +54,22 @@ dropzone.addEventListener('drop', (e) => {
   dropzone.classList.remove('ss-dragover');
   if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
 });
+
+
+function handleFile(file) {
+  showLoading(true);
+
+  if (file.type === 'application/pdf') {
+    extractFromPDF(file);
+  } else if (file.type.startsWith('image/')) {
+    extractFromImage(file);
+  } else {
+    showLoading(false);
+    alert('Please upload an image or a PDF.');
+  }
+}
+
+function showLoading(isLoading) {
+  document.getElementById('ss-loading').classList.toggle('ss-hidden', !isLoading);
+  document.getElementById('ss-dropzone').classList.toggle('ss-hidden', isLoading);
+}
