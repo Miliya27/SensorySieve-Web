@@ -1,11 +1,9 @@
 
 .ss-focus-wrapper {
   position: relative;
-  max-width: 700px;
-  margin: 0 auto;
-  padding: 32px 24px;
-  background-color: #f4f3f0;
-  border-radius: 12px;
+  background: var(--paper-raised);
+  border-radius: var(--radius);
+  padding: 32px;
   overflow: hidden;
 
   --ss-focus-font-size: 19px;
@@ -13,51 +11,17 @@
   --ss-focus-contrast: 100%;
 }
 
-.ss-focus-wrapper,
-.ss-focus-text {
-  color: #3a3a38;
-}
-
-
-.ss-focus-text {
-  font-size: var(--ss-focus-font-size);
-  line-height: var(--ss-focus-line-height);
-  filter: contrast(var(--ss-focus-contrast));
-  max-width: 60ch;
-  margin: 0 auto;
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-  position: relative;
-  z-index: 1;
-}
-
-.ss-focus-text p {
-  margin: 0 0 20px 0;
-}
-
-.ss-focus-text p:last-child {
-  margin-bottom: 0;
-}
-
-
-.ss-focus-bionic-bold {
-  font-weight: 700;
-}
-
-.ss-focus-bionic-rest {
-  font-weight: 400;
-  opacity: 0.85;
-}
-
+/* dimming overlay bars, ruler band stays undimmed between them */
 
 .ss-focus-ruler-top,
 .ss-focus-ruler-bottom {
   position: absolute;
   left: 0;
-  width: 100%;
-  background-color: rgba(10, 10, 8, 0.72);
+  right: 0;
+  background: rgba(34, 38, 31, 0.55);
   pointer-events: none;
-  transition: height 0.05s linear, top 0.05s linear;
-  z-index: 2;
+  z-index: 5;
+  transition: height 0.08s linear;
 }
 
 .ss-focus-ruler-top {
@@ -68,105 +32,97 @@
   bottom: 0;
 }
 
-
-.ss-focus-frozen,
-.ss-focus-frozen * {
-  animation-play-state: paused !important;
-  transition: none !important;
-}
-
-.ss-focus-gif-frozen {
-  display: none !important;
-}
-
-.ss-focus-gif-snapshot {
-  display: inline-block;
-}
-
+/* controls row: sliders + read aloud button */
 
 .ss-focus-controls {
-  position: relative;
-  z-index: 3;
   display: flex;
   flex-wrap: wrap;
-  gap: 28px;
+  gap: 22px;
   align-items: center;
-  margin-bottom: 28px;
-  padding-bottom: 24px;
-  border-bottom: 2px solid rgba(58, 58, 56, 0.2);
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-  font-size: 22px;
+  margin-bottom: 26px;
+  position: relative;
+  z-index: 10;
 }
 
 .ss-focus-control-group {
   display: flex;
-  align-items: center;
-  gap: 14px;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .ss-focus-control-group label {
-  color: #2c2c2a;
+  font-size: 13px;
   font-weight: 700;
-  font-size: 22px;
-  white-space: nowrap;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
 }
 
 .ss-focus-control-group input[type="range"] {
-  width: 150px;
-  height: 28px;
-  accent-color: #6b6b5f;
-  cursor: pointer;
+  accent-color: var(--moss);
+  width: 120px;
 }
 
 .ss-focus-read-btn {
-  margin-left: auto;
-  padding: 16px 32px;
-  background-color: #6b6b5f;
-  color: #f4f3f0;
-  border: none;
-  border-radius: 10px;
-  font-size: 20px;
+  font-family: 'Atkinson Hyperlegible', sans-serif;
+  font-size: 15px;
   font-weight: 700;
+  border-radius: var(--radius);
+  border: 2px solid var(--mist-line);
+  background: transparent;
+  color: var(--ink);
+  padding: 10px 18px;
   cursor: pointer;
 }
 
 .ss-focus-read-btn:hover {
-  background-color: #55554b;
+  border-color: var(--ink-soft);
 }
 
 .ss-focus-read-btn.ss-focus-reading {
-  background-color: #b05c4a;
+  background: var(--moss);
+  color: #fff;
+  border-color: var(--moss);
 }
 
+/* reading text, driven by the slider custom properties */
 
-.ss-focus-definable {
-  border-bottom: 1px dotted #8a8a80;
-  cursor: help;
+.ss-focus-text {
+  position: relative;
+  z-index: 1;
+  max-width: 640px;
+  filter: contrast(var(--ss-focus-contrast));
 }
 
-.ss-focus-tooltip {
-  position: absolute;
-  z-index: 10;
-  max-width: 360px;
-  background-color: #2c2c2a;
-  color: #f4f3f0;
-  padding: 18px 22px;
-  border-radius: 12px;
-  font-size: 18px;
-  line-height: 1.6;
-  pointer-events: none;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+.ss-focus-text p {
+  font-size: var(--ss-focus-font-size);
+  line-height: var(--ss-focus-line-height);
+  margin: 0 0 22px;
+  color: var(--ink);
 }
 
-.ss-focus-tooltip-word {
-  font-weight: 700;
-  font-size: 22px;
-  margin-bottom: 6px;
-  text-transform: capitalize;
+.ss-focus-word {
+  display: inline;
 }
 
-.ss-focus-tooltip-phonetic {
-  color: #c8c8c0;
-  font-size: 16px;
-  margin-bottom: 10px;
+.ss-focus-bionic-bold {
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.ss-focus-bionic-rest {
+  font-weight: 400;
+  color: var(--ink-soft);
+}
+
+/* motion freeze */
+
+.ss-focus-frozen img.ss-focus-gif-frozen {
+  display: none;
+}
+
+.ss-focus-gif-snapshot {
+  border-radius: var(--radius);
+  display: block;
+  margin: 12px 0;
 }

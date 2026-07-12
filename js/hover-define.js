@@ -18,7 +18,7 @@ var HoverDefine = (function () {
     'still', 'name', 'good', 'sentence', 'great', 'where', 'help',
     'through', 'much', 'before', 'line', 'right', 'too', 'same',
     'tell', 'boy', 'follow', 'came', 'want', 'show', 'also', 'around',
-    'form', 'three', 'small', 'set', 'put', 'end', 'does', 'another',
+    'form', '', 'small', 'set', 'put', 'end', 'does', 'another',
     'well', 'large', 'must', 'big', 'even', 'such', 'because', 'turn',
     'here', 'why', 'ask', 'went', 'men', 'read', 'need', 'land',
     'different', 'home', 'move', 'try', 'kind', 'hand', 'picture',

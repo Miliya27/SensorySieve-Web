@@ -1,43 +1,85 @@
 <!DOCTYPE html>
-<html lang ="en">
-    <head>
-        <meta charset=""UTF-8">
-        <meta name="viewport" content = "width=devuce-width, initial-scale=1.0">
-        <title>SensorySieve</title>
-        <script src="https://cdn.tailwindcss.com"></script>
-        <link rel ="stylesheet" href="css/style.css">
-        <link rel=""stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/dyslexia.css">
-    <link rel="stylesheet" href="css/focus.css">
-    <link rel="stylesheet" href="css/input.css">
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SensorySieve</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/dyslexia.css">
+  <link rel="stylesheet" href="css/focus.css">
+  <link rel="stylesheet" href="css/input.css">
 </head>
-<body class="bg-gray-50 min-h-screen">
-    <h1 class="text-xl font-bold">SensorySieve</h1>
-    <p class=""text-sm text-gray-500">Turn any text into something your brain can actually read</p>
-  </header>
-  <main class = "max-w-3xl mx-auto p-4">
-     <div id="input-zone" class="mb-6">
-      <p class="text-gray-400">Upload area loading...</p>
+<body>
+
+  <nav class="navbar">
+    <div class="logo" id="logo-home-link">Sensory<span>Sieve</span></div>
+    <button class="nav-toggle" id="nav-toggle" type="button" aria-label="Toggle menu">Menu</button>
+    <div class="nav-links" id="nav-links">
+      <a href="#" id="nav-home">Home</a>
     </div>
+  </nav>
 
+  <!-- SCREEN 1: home / upload -->
+  <div id="screen-home" class="screen active">
+    <section class="block" id="home">
+      <div class="hero-wrap">
+        <h1 class="wordmark-huge">SensorySieve</h1>
+        <p class="lede">
+          SensorySieve reflows any text — a photo, a file, or a link — into a format
+          that's easier to read.
+        </p>
+      </div>
+    </section>
 
-    <div class="flex gap-6 mb-4">
-      <label class="flex items-center gap-2">
-        <input type="checkbox" id="dyslexia-toggle">
-        Dyslexia Mode
-      </label>
-      <label class="flex items-center gap-2">
-        <input type="checkbox" id="focus-toggle">
-        Focus Mode
-      </label>
-    </div>
-     <div id="reader-output" class="bg-white p-4 rounded border min-h-[200px]">
-      <p class="text-gray-400">Your text will show up here once you upload something.</p>
-    </div>
+    <section class="block on-paper" id="add-text">
+      <h2 class="section-title">Add text</h2>
+      <p class="sub">A file, a photo, or a link — pick how you'd like to read it next.</p>
+      <div id="input-zone" class="mb-6"></div>
+    </section>
+  </div>
 
-  </main>
+  <!-- SCREEN 2: choose reading mode -->
+  <div id="screen-mode-select" class="screen">
+    <section class="block" id="mode-select">
+      <h2 class="section-title">Choose how you'd like to read this</h2>
+      <p class="sub">You can switch modes any time.</p>
 
- <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+      <div class="mode-cards">
+        <button class="mode-card" id="pick-dyslexia" type="button">
+          <div class="mode-card-title">Dyslexia mode</div>
+          <div class="mode-card-desc">Wider letter, word, and line spacing</div>
+        </button>
+        <button class="mode-card" id="pick-focus" type="button">
+          <div class="mode-card-title">Focus mode</div>
+          <div class="mode-card-desc">One paragraph in view at a time</div>
+        </button>
+      </div>
+    </section>
+  </div>
+
+  <!-- SCREEN 3: dyslexia reading view -->
+  <div id="screen-dyslexia" class="screen">
+    <section class="block">
+      <button class="back-link" id="back-from-dyslexia" type="button">&larr; Switch mode</button>
+      <h2 class="section-title">Dyslexia mode</h2>
+      <div id="dyslexia-output" class="pane"></div>
+    </section>
+  </div>
+
+  <!-- SCREEN 4: focus reading view -->
+  <div id="screen-focus" class="screen">
+    <section class="block">
+      <button class="back-link" id="back-from-focus" type="button">&larr; Switch mode</button>
+      <h2 class="section-title">Focus mode</h2>
+      <div id="focus-output" class="pane"></div>
+    </section>
+  </div>
+
+ 
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="js/app.js"></script>
   <script src="js/simplify.js"></script>
@@ -46,5 +88,14 @@
   <script src="js/hover-define.js"></script>
   <script src="js/focus.js"></script>
   <script src="js/input.js"></script>
+
+  <script>
+    var navToggle = document.getElementById('nav-toggle');
+    var navLinks = document.getElementById('nav-links');
+    navToggle.addEventListener('click', function () {
+      navLinks.classList.toggle('open');
+    });
+  </script>
+
 </body>
 </html>
