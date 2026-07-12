@@ -1,73 +1,109 @@
-/* css/input.css */
+
+
+.ss-input-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
 
 .ss-hidden-input {
   display: none;
 }
 
-.ss-input-wrapper {
-  max-width: 500px;
-  margin: 0 auto;
-}
-
 .ss-dropzone {
-  border: 2px dashed #999;
-  border-radius: 12px;
-  padding: 2rem;
+  border: 2px dashed var(--mist-line);
+  border-radius: var(--radius);
+  background: var(--paper);
+  padding: 36px 28px;
   text-align: center;
-  transition: border-color 0.2s, background-color 0.2s;
+  transition: border-color 0.2s ease, background 0.2s ease;
 }
 
 .ss-dropzone.ss-dragover {
-  border-color: #4a90e2;
-  background-color: #f0f7ff;
+  border-color: var(--moss);
+  background: #e7ebe3;
+}
+
+.ss-dropzone p {
+  margin: 0 0 22px;
+  font-size: 17px;
+  color: var(--ink-soft);
 }
 
 .ss-btn {
-  margin: 0.5rem;
-  padding: 0.6rem 1.2rem;
-  border: none;
-  border-radius: 8px;
-  background-color: #4a90e2;
-  color: white;
+  font-family: 'Atkinson Hyperlegible', sans-serif;
+  font-size: 16.5px;
+  font-weight: 700;
+  border-radius: var(--radius);
+  border: 2px solid var(--mist-line);
+  background: transparent;
+  color: var(--ink);
+  padding: 15px 24px;
   cursor: pointer;
-  font-size: 1rem;
+  margin: 0 6px;
 }
 
 .ss-btn:hover {
-  background-color: #357abd;
+  border-color: var(--ink-soft);
 }
 
-.ss-loading {
-  text-align: center;
-  padding: 2rem;
+#ss-upload-btn {
+  background: var(--moss);
+  color: #fff;
+  border-color: var(--moss);
 }
 
-.ss-hidden {
-  display: none;
+#ss-upload-btn:hover {
+  background: var(--moss-deep);
 }
-
 
 .ss-url-row {
   display: flex;
-  gap: 0.5rem;
-  margin-top: 1rem;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 10px;
 }
 
 .ss-url-field {
   flex: 1;
-  padding: 0.6rem 0.9rem;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  font-size: 1rem;
+  min-width: 220px;
+  font-family: 'Atkinson Hyperlegible', sans-serif;
+  font-size: 16px;
+  padding: 15px 17px;
+  border: 2px solid var(--mist-line);
+  border-radius: var(--radius);
+  background: #fff;
+  color: var(--ink);
 }
 
 .ss-url-field:focus {
-  outline: none;
-  border-color: #4a90e2;
+  outline: 3px solid var(--moss);
+  outline-offset: 2px;
+}
+
+#ss-url-btn {
+  background: var(--ink);
+  color: var(--paper-raised);
+  border-color: var(--ink);
+}
+
+#ss-url-btn:hover {
+  background: #000;
 }
 
 .ss-url-error {
-  color: #d9534f;
-  font-size: 0.9rem;
-  margin-top: 0.5rem;
+  color: var(--rust-deep);
+  font-size: 15px;
+  margin-top: 8px;
+}
+
+.ss-loading {
+  text-align: center;
+  padding: 30px;
+  font-size: 17px;
+  color: var(--ink-soft);
+}
+
+.ss-hidden {
+  display: none;
 }

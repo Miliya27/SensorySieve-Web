@@ -1,45 +1,51 @@
-
-
 var currentText = "";
+window.currentMode = null;
 
 window.addEventListener("textReady", function (event) {
   currentText = event.detail.text;
-  renderCurrentMode();
+  showScreen("screen-mode-select");
 });
 
-var dyslexiaToggle = document.getElementById("dyslexia-toggle");
-var focusToggle = document.getElementById("focus-toggle");
-
-dyslexiaToggle.addEventListener("change", function () {
-  if (dyslexiaToggle.checked) {
-    focusToggle.checked = false;
-  }
-  renderCurrentMode();
+document.getElementById("pick-dyslexia").addEventListener("click", function () {
+  window.currentMode = "dyslexia";
+  showScreen("screen-dyslexia");
+  var outputBox = document.getElementById("dyslexia-output");
+  DyslexiaMode.render(currentText, outputBox);
 });
 
-focusToggle.addEventListener("change", function () {
-  if (focusToggle.checked) {
-    dyslexiaToggle.checked = false;
-  }
-  renderCurrentMode();
+document.getElementById("pick-focus").addEventListener("click", function () {
+  window.currentMode = "focus";
+  showScreen("screen-focus");
+  var outputBox = document.getElementById("focus-output");
+  FocusMode.render(currentText, outputBox);
 });
 
-function renderCurrentMode() {
-  var outputBox = document.getElementById("reader-output");
+document.getElementById("back-from-dyslexia").addEventListener("click", function () {
+  window.currentMode = null;
+  showScreen("screen-mode-select");
+});
 
-  if (!currentText) {
-    return;
-  }
+document.getElementById("back-from-focus").addEventListener("click", function () {
+  window.currentMode = null;
+  showScreen("screen-mode-select");
+});
 
-  if (dyslexiaToggle.checked) {
-    DyslexiaMode.render(currentText, outputBox);
-  } else if (focusToggle.checked) {
-    FocusMode.render(currentText, outputBox);
-  } else {
-    
-    outputBox.innerHTML = "";
-    var p = document.createElement("p");
-    p.textContent = currentText;
-    outputBox.appendChild(p);
+document.getElementById("nav-home").addEventListener("click", function (e) {
+  e.preventDefault();
+  window.currentMode = null;
+  showScreen("screen-home");
+});
+
+document.getElementById("logo-home-link").addEventListener("click", function () {
+  window.currentMode = null;
+  showScreen("screen-home");
+});
+
+function showScreen(screenId) {
+  var allScreens = document.querySelectorAll(".screen");
+  for (var i = 0; i < allScreens.length; i++) {
+    allScreens[i].classList.remove("active");
   }
+  document.getElementById(screenId).classList.add("active");
+  window.scrollTo(0, 0);
 }
