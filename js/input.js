@@ -1,5 +1,4 @@
 
-
 const inputZone = document.getElementById('input-zone');
 
 inputZone.innerHTML = `
@@ -11,6 +10,13 @@ inputZone.innerHTML = `
       <p>Drag & drop an image or PDF here</p>
       <button id="ss-camera-btn" class="ss-btn">📷 Take Photo</button>
       <button id="ss-upload-btn" class="ss-btn">📁 Upload File</button>
+      <button id="ss-live-btn" class="ss-btn ss-btn-live">🎥 Live Preview</button>
+    </div>
+
+    <div id="ss-live-preview-container" class="ss-live-container ss-hidden">
+      <video id="ss-live-camera" autoplay playsinline class="ss-live-video"></video>
+      <div id="ss-live-text-overlay" class="ss-live-overlay"></div>
+      <button id="ss-live-stop-btn" class="ss-btn ss-live-stop">✕ Stop Live Preview</button>
     </div>
 
     <div class="ss-url-row">
@@ -34,6 +40,8 @@ document.getElementById('ss-camera-btn').addEventListener('click', () => {
 document.getElementById('ss-upload-btn').addEventListener('click', () => {
   document.getElementById('ss-file-input').click();
 });
+document.getElementById('ss-live-btn').addEventListener('click', startLivePreview);
+document.getElementById('ss-live-stop-btn').addEventListener('click', stopLivePreview);
 
 document.getElementById('ss-camera-input').addEventListener('change', (e) => {
   if (e.target.files[0]) handleFile(e.target.files[0]);
@@ -186,7 +194,84 @@ function finishExtraction(text) {
   showLoading(false);
   window.dispatchEvent(new CustomEvent('textExtracted', { detail: { text } }));
 }
+// ---- Live Preview Mode — separate code path, camera-loop based ----
 
+let liveStream = null;
+let liveOcrInterval = null;
+let liveIsProcessing = false;
+const liveCaptureCanvas = document.createElement('canvas');
+const liveCtx = liveCaptureCanvas.getContext('2d');
+
+async function startLivePreview() {
+  const video = document.getElementById('ss-live-camera');
+  const stream = await navigator.mediaDevices.getUserMedia({
+    video: { facingMode: 'environment' }
+  });
+  liveStream = stream;
+  video.srcObject = stream;
+
+  document.getElementById('ss-live-preview-container').classList.remove('ss-hidden');
+  document.getElementById('ss-dropzone').classList.add('ss-hidden');
+
+  liveOcrInterval = setInterval(runLiveOCR, 1800);
+}
+
+function stopLivePreview() {
+  clearInterval(liveOcrInterval);
+  if (liveStream) {
+    liveStream.getTracks().forEach(track => track.stop());
+    liveStream = null;
+  }
+  document.getElementById('ss-live-preview-container').classList.add('ss-hidden');
+  document.getElementById('ss-dropzone').classList.remove('ss-hidden');
+}
+
+function grabLiveFrame(video) {
+  liveCaptureCanvas.width = video.videoWidth;
+  liveCaptureCanvas.height = video.videoHeight;
+  liveCtx.drawImage(video, 0, 0, liveCaptureCanvas.width, liveCaptureCanvas.height);
+  return liveCaptureCanvas;
+}
+
+async function runLiveOCR() {
+  if (liveIsProcessing) return;
+  const video = document.getElementById('ss-live-camera');
+  if (video.videoWidth === 0 || video.videoHeight === 0) return;
+  liveIsProcessing = true;
+
+  const frame = grabLiveFrame(video);
+  const result = await Tesseract.recognize(frame, 'eng');
+  const text = result.data.text.trim();
+
+  if (text.length > 0) {
+    updateLiveOverlay(text);
+  }
+
+  liveIsProcessing = false;
+}
+
+function updateLiveOverlay(text) {
+  const overlay = document.getElementById('ss-live-text-overlay');
+  overlay.style.opacity = 0;
+
+  setTimeout(() => {
+    const mode = window.currentMode || null; // set by Teju's app.js
+
+    if (mode === 'dyslexia' && window.DyslexiaMode) {
+      DyslexiaMode.render(text, overlay);
+    } else if (mode === 'focus' && window.FocusMode) {
+      FocusMode.render(text, overlay);
+    } else {
+      overlay.textContent = text;
+    }
+
+    overlay.style.opacity = 1;
+  }, 200);
+}
+
+window.addEventListener('beforeunload', () => {
+  if (liveStream) stopLivePreview();
+});
 
 
 function showLoading(isLoading, message = 'Reading your document...') {
