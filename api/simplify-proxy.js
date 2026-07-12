@@ -7,10 +7,18 @@ module.exports = async function handler(req, res) {
   }
 
   var text = req.body.text;
+  var mode = req.body.mode || "simplify";
 
   if (!text) {
     res.status(400).json({ error: "No text provided" });
     return;
+  }
+
+  var promptText;
+  if (mode === "explain") {
+    promptText = "Explain the following sentence or passage in much simpler, plain everyday words. Keep it short, one or two sentences max. Do not add extra information, just rephrase it simpler.\n\n" + text;
+  } else {
+    promptText = "Restructure the following text into clear bullet points, without losing any meaning or important detail. Only return the bullet points, nothing else.\n\n" + text;
   }
 
   var apiKey = process.env.LLM_API_KEY;
@@ -27,23 +35,22 @@ module.exports = async function handler(req, res) {
         messages: [
           {
             role: "user",
-            content: "Restructure the following text into clear bullet points, without losing any meaning or important detail. Only return the bullet points, nothing else.\n\n" + text
+            content: promptText
           }
         ]
       })
     });
 
     var data = await response.json();
-    
 
     if (!data.choices || !data.choices[0]) {
       res.status(500).json({ error: "Simplify call failed" });
       return;
     }
 
-    var bulletText = data.choices[0].message.content;
+    var resultText = data.choices[0].message.content;
 
-    res.status(200).json({ text: bulletText });
+    res.status(200).json({ text: resultText });
   } catch (err) {
     res.status(500).json({ error: "Simplify call failed" });
   }
