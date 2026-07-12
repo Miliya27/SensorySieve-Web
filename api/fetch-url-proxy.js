@@ -1,3 +1,4 @@
+
 module.exports = async function handler(req, res) {
   if (req.method !== "POST") {
     res.status(405).json({ error: "Only POST requests allowed" });
@@ -24,6 +25,15 @@ module.exports = async function handler(req, res) {
     return;
   }
 
+  
+  var blockedHosts = ["youtube.com", "youtu.be", "vimeo.com"];
+  for (var i = 0; i < blockedHosts.length; i++) {
+    if (parsedUrl.hostname.indexOf(blockedHosts[i]) !== -1) {
+      res.status(400).json({ error: "Video links aren't supported yet — try an article or blog URL" });
+      return;
+    }
+  }
+
   var controller = new AbortController();
   var timeoutId = setTimeout(function () {
     controller.abort();
@@ -41,6 +51,11 @@ module.exports = async function handler(req, res) {
     var html = await response.text();
     var text = extractReadableText(html);
 
+    if (text.length === 0) {
+      res.status(422).json({ error: "Couldn't find readable text on that page" });
+      return;
+    }
+
     res.status(200).json({ text: text });
   } catch (err) {
     clearTimeout(timeoutId);
@@ -53,24 +68,22 @@ module.exports = async function handler(req, res) {
 };
 
 function extractReadableText(html) {
-  
   var cleaned = html.replace(/<script[\s\S]*?<\/script>/gi, "");
   cleaned = cleaned.replace(/<style[\s\S]*?<\/style>/gi, "");
-
   cleaned = cleaned.replace(/<nav[\s\S]*?<\/nav>/gi, "");
   cleaned = cleaned.replace(/<footer[\s\S]*?<\/footer>/gi, "");
-
-  
   cleaned = cleaned.replace(/<[^>]+>/g, " ");
-
-  
   cleaned = cleaned.replace(/&nbsp;/g, " ");
   cleaned = cleaned.replace(/&amp;/g, "&");
   cleaned = cleaned.replace(/&quot;/g, '"');
   cleaned = cleaned.replace(/&#39;/g, "'");
+  cleaned = cleaned.replace(/\s+/g, " ").trim();
 
   
-  cleaned = cleaned.replace(/\s+/g, " ").trim();
+  var maxChars = 6000;
+  if (cleaned.length > maxChars) {
+    cleaned = cleaned.substring(0, maxChars) + "... (content truncated, showing first portion)";
+  }
 
   return cleaned;
 }
