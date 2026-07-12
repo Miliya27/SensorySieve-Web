@@ -1,5 +1,3 @@
-
-
 .ss-input-wrapper {
   display: flex;
   flex-direction: column;
@@ -57,6 +55,16 @@
   background: var(--moss-deep);
 }
 
+.ss-btn-live {
+  background: var(--ink);
+  color: var(--paper-raised);
+  border-color: var(--ink);
+}
+
+.ss-btn-live:hover {
+  background: #000;
+}
+
 .ss-url-row {
   display: flex;
   flex-wrap: wrap;
@@ -106,4 +114,56 @@
 
 .ss-hidden {
   display: none;
+}
+
+/* ---- Live Preview additions ---- */
+
+.ss-live-container {
+  position: relative;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 2px solid var(--mist-line);
+}
+
+.ss-live-video {
+  width: 100%;
+  display: block;
+}
+
+.ss-live-overlay {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+  padding: 16px;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.ss-live-dyslexia-toggle {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  padding: 10px 16px;
+  font-size: 14px;
+}
+
+.ss-live-toggle-active {
+  background: var(--moss);
+  color: #fff;
+  border-color: var(--moss);
+}
+
+.ss-live-stop {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  padding: 10px 16px;
+  font-size: 14px;
+  background: var(--rust-deep);
+  color: #fff;
+  border-color: var(--rust-deep);
 }

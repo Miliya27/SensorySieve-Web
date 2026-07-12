@@ -1,4 +1,3 @@
-
 const inputZone = document.getElementById('input-zone');
 
 inputZone.innerHTML = `
@@ -16,6 +15,7 @@ inputZone.innerHTML = `
     <div id="ss-live-preview-container" class="ss-live-container ss-hidden">
       <video id="ss-live-camera" autoplay playsinline class="ss-live-video"></video>
       <div id="ss-live-text-overlay" class="ss-live-overlay"></div>
+      <button id="ss-live-dyslexia-toggle" class="ss-btn ss-live-dyslexia-toggle">🔤 Dyslexia View</button>
       <button id="ss-live-stop-btn" class="ss-btn ss-live-stop">✕ Stop Live Preview</button>
     </div>
 
@@ -31,8 +31,6 @@ inputZone.innerHTML = `
   </div>
 `;
 
-
-
 document.getElementById('ss-camera-btn').addEventListener('click', () => {
   document.getElementById('ss-camera-input').click();
 });
@@ -40,8 +38,6 @@ document.getElementById('ss-camera-btn').addEventListener('click', () => {
 document.getElementById('ss-upload-btn').addEventListener('click', () => {
   document.getElementById('ss-file-input').click();
 });
-document.getElementById('ss-live-btn').addEventListener('click', startLivePreview);
-document.getElementById('ss-live-stop-btn').addEventListener('click', stopLivePreview);
 
 document.getElementById('ss-camera-input').addEventListener('change', (e) => {
   if (e.target.files[0]) handleFile(e.target.files[0]);
@@ -62,6 +58,16 @@ document.getElementById('ss-url-input').addEventListener('keydown', (e) => {
   if (e.key === 'Enter') {
     document.getElementById('ss-url-btn').click();
   }
+});
+
+document.getElementById('ss-live-btn').addEventListener('click', startLivePreview);
+document.getElementById('ss-live-stop-btn').addEventListener('click', stopLivePreview);
+
+document.getElementById('ss-live-dyslexia-toggle').addEventListener('click', () => {
+  liveDyslexiaOn = !liveDyslexiaOn;
+  const btn = document.getElementById('ss-live-dyslexia-toggle');
+  btn.textContent = liveDyslexiaOn ? '🔤 Dyslexia View: ON' : '🔤 Dyslexia View';
+  btn.classList.toggle('ss-live-toggle-active', liveDyslexiaOn);
 });
 
 
@@ -96,11 +102,13 @@ function handleFile(file) {
   }
 }
 
-function showLoading(isLoading) {
-  document.getElementById('ss-loading').classList.toggle('ss-hidden', !isLoading);
+function showLoading(isLoading, message = 'Reading your document...') {
+  const loadingEl = document.getElementById('ss-loading');
+  const loadingTextEl = document.getElementById('ss-loading-text');
+  loadingTextEl.textContent = message;
+  loadingEl.classList.toggle('ss-hidden', !isLoading);
   document.getElementById('ss-dropzone').classList.toggle('ss-hidden', isLoading);
 }
-
 
 
 function preprocessImage(imageElement) {
@@ -113,14 +121,13 @@ function preprocessImage(imageElement) {
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
   const pixels = imageData.data;
 
-  const contrastFactor = 1.3; 
+  const contrastFactor = 1.3;
 
   for (let i = 0; i < pixels.length; i += 4) {
     const gray = (pixels[i] + pixels[i + 1] + pixels[i + 2]) / 3;
     let contrasted = (gray - 128) * contrastFactor + 128;
     contrasted = Math.max(0, Math.min(255, contrasted));
 
-    
     pixels[i] = contrasted;
     pixels[i + 1] = contrasted;
     pixels[i + 2] = contrasted;
@@ -140,9 +147,8 @@ function extractFromImage(file) {
       const processedCanvas = preprocessImage(img);
 
       try {
-       
         const result = await Tesseract.recognize(processedCanvas, 'eng');
-const text = result.data.text.trim();
+        const text = result.data.text.trim();
         finishExtraction(text);
       } catch (err) {
         console.error('OCR failed:', err);
@@ -157,7 +163,6 @@ const text = result.data.text.trim();
 }
 
 async function extractFromPDF(file) {
-  
   pdfjsLib.GlobalWorkerOptions.workerSrc =
     'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
@@ -176,7 +181,6 @@ async function extractFromPDF(file) {
     fullText = fullText.trim();
 
     if (fullText.length === 0) {
-      
       showLoading(false);
       alert('This PDF has no selectable text (it may be a scanned image). Try uploading it as an image instead.');
       return;
@@ -194,11 +198,70 @@ function finishExtraction(text) {
   showLoading(false);
   window.dispatchEvent(new CustomEvent('textExtracted', { detail: { text } }));
 }
+
+
+const URL_FETCH_ENDPOINT = '/api/fetch-url-proxy';
+
+async function handleUrlSubmit(url) {
+  hideUrlError();
+  showLoading(true, 'Fetching page content...');
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
+  try {
+    const response = await fetch(URL_FETCH_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      throw new Error(`Server responded with status ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (!data.text || data.text.trim().length === 0) {
+      throw new Error('No readable text found at that URL.');
+    }
+
+    showLoading(false);
+    window.dispatchEvent(new CustomEvent('textExtracted', { detail: { text: data.text } }));
+
+  } catch (err) {
+    clearTimeout(timeoutId);
+    showLoading(false);
+
+    if (err.name === 'AbortError') {
+      showUrlError('That took too long to load. Try again or use a different URL.');
+    } else {
+      showUrlError('Could not load that page. Check the URL and try again.');
+    }
+    console.error('URL fetch failed:', err);
+  }
+}
+
+function showUrlError(message) {
+  const errorEl = document.getElementById('ss-url-error');
+  errorEl.textContent = message;
+  errorEl.classList.remove('ss-hidden');
+}
+
+function hideUrlError() {
+  const errorEl = document.getElementById('ss-url-error');
+  errorEl.classList.add('ss-hidden');
+}
+
+
 // ---- Live Preview Mode — separate code path, camera-loop based ----
 
 let liveStream = null;
 let liveOcrInterval = null;
 let liveIsProcessing = false;
+let liveDyslexiaOn = false; // LOCAL toggle — no dependency on app.js / window.currentMode
 const liveCaptureCanvas = document.createElement('canvas');
 const liveCtx = liveCaptureCanvas.getContext('2d');
 
@@ -255,16 +318,11 @@ function updateLiveOverlay(text) {
   overlay.style.opacity = 0;
 
   setTimeout(() => {
-    const mode = window.currentMode || null; // set by Teju's app.js
-
-    if (mode === 'dyslexia' && window.DyslexiaMode) {
+    if (liveDyslexiaOn && window.DyslexiaMode) {
       DyslexiaMode.render(text, overlay);
-    } else if (mode === 'focus' && window.FocusMode) {
-      FocusMode.render(text, overlay);
     } else {
       overlay.textContent = text;
     }
-
     overlay.style.opacity = 1;
   }, 200);
 }
@@ -272,70 +330,3 @@ function updateLiveOverlay(text) {
 window.addEventListener('beforeunload', () => {
   if (liveStream) stopLivePreview();
 });
-
-
-function showLoading(isLoading, message = 'Reading your document...') {
-  const loadingEl = document.getElementById('ss-loading');
-  const loadingTextEl = document.getElementById('ss-loading-text');
-  loadingTextEl.textContent = message;
-  loadingEl.classList.toggle('ss-hidden', !isLoading);
-  document.getElementById('ss-dropzone').classList.toggle('ss-hidden', isLoading);
-}
-
-
-const URL_FETCH_ENDPOINT = '/api/fetch-url-proxy';
-
-async function handleUrlSubmit(url) {
-  hideUrlError();
-  showLoading(true, 'Fetching page content...');
-
-  
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 10000); 
-  try {
-    const response = await fetch(URL_FETCH_ENDPOINT, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url }),
-      signal: controller.signal,
-    });
-
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      throw new Error(`Server responded with status ${response.status}`);
-    }
-
-    const data = await response.json();
-
-    if (!data.text || data.text.trim().length === 0) {
-      throw new Error('No readable text found at that URL.');
-    }
-
-    showLoading(false);
-    
-    window.dispatchEvent(new CustomEvent('textExtracted', { detail: { text: data.text } }));
-
-  } catch (err) {
-    clearTimeout(timeoutId);
-    showLoading(false);
-
-    if (err.name === 'AbortError') {
-      showUrlError('That took too long to load. Try again or use a different URL.');
-    } else {
-      showUrlError('Could not load that page. Check the URL and try again.');
-    }
-    console.error('URL fetch failed:', err);
-  }
-}
-
-function showUrlError(message) {
-  const errorEl = document.getElementById('ss-url-error');
-  errorEl.textContent = message;
-  errorEl.classList.remove('ss-hidden');
-}
-
-function hideUrlError() {
-  const errorEl = document.getElementById('ss-url-error');
-  errorEl.classList.add('ss-hidden');
-}
