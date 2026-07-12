@@ -1,5 +1,3 @@
-
-
 const inputZone = document.getElementById('input-zone');
 
 inputZone.innerHTML = `
@@ -11,6 +9,14 @@ inputZone.innerHTML = `
       <p>Drag & drop an image or PDF here</p>
       <button id="ss-camera-btn" class="ss-btn">📷 Take Photo</button>
       <button id="ss-upload-btn" class="ss-btn">📁 Upload File</button>
+      <button id="ss-live-btn" class="ss-btn ss-btn-live">🎥 Live Preview</button>
+    </div>
+
+    <div id="ss-live-preview-container" class="ss-live-container ss-hidden">
+      <video id="ss-live-camera" autoplay playsinline class="ss-live-video"></video>
+      <div id="ss-live-text-overlay" class="ss-live-overlay"></div>
+      <button id="ss-live-dyslexia-toggle" class="ss-btn ss-live-dyslexia-toggle">🔤 Dyslexia View</button>
+      <button id="ss-live-stop-btn" class="ss-btn ss-live-stop">✕ Stop Live Preview</button>
     </div>
 
     <div class="ss-url-row">
@@ -24,8 +30,6 @@ inputZone.innerHTML = `
     </div>
   </div>
 `;
-
-
 
 document.getElementById('ss-camera-btn').addEventListener('click', () => {
   document.getElementById('ss-camera-input').click();
@@ -54,6 +58,16 @@ document.getElementById('ss-url-input').addEventListener('keydown', (e) => {
   if (e.key === 'Enter') {
     document.getElementById('ss-url-btn').click();
   }
+});
+
+document.getElementById('ss-live-btn').addEventListener('click', startLivePreview);
+document.getElementById('ss-live-stop-btn').addEventListener('click', stopLivePreview);
+
+document.getElementById('ss-live-dyslexia-toggle').addEventListener('click', () => {
+  liveDyslexiaOn = !liveDyslexiaOn;
+  const btn = document.getElementById('ss-live-dyslexia-toggle');
+  btn.textContent = liveDyslexiaOn ? '🔤 Dyslexia View: ON' : '🔤 Dyslexia View';
+  btn.classList.toggle('ss-live-toggle-active', liveDyslexiaOn);
 });
 
 
@@ -88,11 +102,13 @@ function handleFile(file) {
   }
 }
 
-function showLoading(isLoading) {
-  document.getElementById('ss-loading').classList.toggle('ss-hidden', !isLoading);
+function showLoading(isLoading, message = 'Reading your document...') {
+  const loadingEl = document.getElementById('ss-loading');
+  const loadingTextEl = document.getElementById('ss-loading-text');
+  loadingTextEl.textContent = message;
+  loadingEl.classList.toggle('ss-hidden', !isLoading);
   document.getElementById('ss-dropzone').classList.toggle('ss-hidden', isLoading);
 }
-
 
 
 function preprocessImage(imageElement) {
@@ -105,14 +121,13 @@ function preprocessImage(imageElement) {
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
   const pixels = imageData.data;
 
-  const contrastFactor = 1.3; 
+  const contrastFactor = 1.3;
 
   for (let i = 0; i < pixels.length; i += 4) {
     const gray = (pixels[i] + pixels[i + 1] + pixels[i + 2]) / 3;
     let contrasted = (gray - 128) * contrastFactor + 128;
     contrasted = Math.max(0, Math.min(255, contrasted));
 
-    
     pixels[i] = contrasted;
     pixels[i + 1] = contrasted;
     pixels[i + 2] = contrasted;
@@ -132,9 +147,8 @@ function extractFromImage(file) {
       const processedCanvas = preprocessImage(img);
 
       try {
-       
         const result = await Tesseract.recognize(processedCanvas, 'eng');
-const text = result.data.text.trim();
+        const text = result.data.text.trim();
         finishExtraction(text);
       } catch (err) {
         console.error('OCR failed:', err);
@@ -149,7 +163,6 @@ const text = result.data.text.trim();
 }
 
 async function extractFromPDF(file) {
-  
   pdfjsLib.GlobalWorkerOptions.workerSrc =
     'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
@@ -168,7 +181,6 @@ async function extractFromPDF(file) {
     fullText = fullText.trim();
 
     if (fullText.length === 0) {
-      
       showLoading(false);
       alert('This PDF has no selectable text (it may be a scanned image). Try uploading it as an image instead.');
       return;
@@ -188,25 +200,14 @@ function finishExtraction(text) {
 }
 
 
-
-function showLoading(isLoading, message = 'Reading your document...') {
-  const loadingEl = document.getElementById('ss-loading');
-  const loadingTextEl = document.getElementById('ss-loading-text');
-  loadingTextEl.textContent = message;
-  loadingEl.classList.toggle('ss-hidden', !isLoading);
-  document.getElementById('ss-dropzone').classList.toggle('ss-hidden', isLoading);
-}
-
-
 const URL_FETCH_ENDPOINT = '/api/fetch-url-proxy';
 
 async function handleUrlSubmit(url) {
   hideUrlError();
   showLoading(true, 'Fetching page content...');
 
-  
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 10000); 
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
   try {
     const response = await fetch(URL_FETCH_ENDPOINT, {
       method: 'POST',
@@ -228,7 +229,6 @@ async function handleUrlSubmit(url) {
     }
 
     showLoading(false);
-    
     window.dispatchEvent(new CustomEvent('textExtracted', { detail: { text: data.text } }));
 
   } catch (err) {
@@ -254,3 +254,79 @@ function hideUrlError() {
   const errorEl = document.getElementById('ss-url-error');
   errorEl.classList.add('ss-hidden');
 }
+
+
+// ---- Live Preview Mode — separate code path, camera-loop based ----
+
+let liveStream = null;
+let liveOcrInterval = null;
+let liveIsProcessing = false;
+let liveDyslexiaOn = false; // LOCAL toggle — no dependency on app.js / window.currentMode
+const liveCaptureCanvas = document.createElement('canvas');
+const liveCtx = liveCaptureCanvas.getContext('2d');
+
+async function startLivePreview() {
+  const video = document.getElementById('ss-live-camera');
+  const stream = await navigator.mediaDevices.getUserMedia({
+    video: { facingMode: 'environment' }
+  });
+  liveStream = stream;
+  video.srcObject = stream;
+
+  document.getElementById('ss-live-preview-container').classList.remove('ss-hidden');
+  document.getElementById('ss-dropzone').classList.add('ss-hidden');
+
+  liveOcrInterval = setInterval(runLiveOCR, 1800);
+}
+
+function stopLivePreview() {
+  clearInterval(liveOcrInterval);
+  if (liveStream) {
+    liveStream.getTracks().forEach(track => track.stop());
+    liveStream = null;
+  }
+  document.getElementById('ss-live-preview-container').classList.add('ss-hidden');
+  document.getElementById('ss-dropzone').classList.remove('ss-hidden');
+}
+
+function grabLiveFrame(video) {
+  liveCaptureCanvas.width = video.videoWidth;
+  liveCaptureCanvas.height = video.videoHeight;
+  liveCtx.drawImage(video, 0, 0, liveCaptureCanvas.width, liveCaptureCanvas.height);
+  return liveCaptureCanvas;
+}
+
+async function runLiveOCR() {
+  if (liveIsProcessing) return;
+  const video = document.getElementById('ss-live-camera');
+  if (video.videoWidth === 0 || video.videoHeight === 0) return;
+  liveIsProcessing = true;
+
+  const frame = grabLiveFrame(video);
+  const result = await Tesseract.recognize(frame, 'eng');
+  const text = result.data.text.trim();
+
+  if (text.length > 0) {
+    updateLiveOverlay(text);
+  }
+
+  liveIsProcessing = false;
+}
+
+function updateLiveOverlay(text) {
+  const overlay = document.getElementById('ss-live-text-overlay');
+  overlay.style.opacity = 0;
+
+  setTimeout(() => {
+    if (liveDyslexiaOn && window.DyslexiaMode) {
+      DyslexiaMode.render(text, overlay);
+    } else {
+      overlay.textContent = text;
+    }
+    overlay.style.opacity = 1;
+  }, 200);
+}
+
+window.addEventListener('beforeunload', () => {
+  if (liveStream) stopLivePreview();
+});

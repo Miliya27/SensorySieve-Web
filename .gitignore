@@ -4,3 +4,4 @@ node_modules/
 .env*
 test-input.html
 te.html
+test-live-ocr.html
